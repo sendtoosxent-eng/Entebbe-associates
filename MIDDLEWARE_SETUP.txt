@@ -1,0 +1,37 @@
+MIDDLEWARE REGISTRATION
+========================
+Laravel 11/12 register middleware aliases in bootstrap/app.php (NOT app/Http/Kernel.php).
+
+Open bootstrap/app.php and update the ->withMiddleware() section like this:
+
+    ->withMiddleware(function (Middleware $middleware) {
+        $middleware->alias([
+            'admin' => \App\Http\Middleware\EnsureUserIsAdmin::class,
+        ]);
+    })
+
+If your bootstrap/app.php doesn't have a ->withMiddleware() call yet, add one to the
+Application::configure() chain, right after ->withRouting(...).
+
+---
+
+If you're on Laravel 10 or older (has app/Http/Kernel.php) instead, add this line to the
+$middlewareAliases (or $routeMiddleware) array in app/Http/Kernel.php:
+
+    'admin' => \App\Http\Middleware\EnsureUserIsAdmin::class,
+
+
+REDIRECT UNAUTHENTICATED USERS TO admin.login
+===============================================
+By default, Laravel's `auth` middleware redirects guests to a route named `login`.
+We used `admin.login` instead. The cleanest fix (Laravel 11/12) — add this inside
+->withMiddleware() in bootstrap/app.php, alongside the alias:
+
+    ->withMiddleware(function (Middleware $middleware) {
+        $middleware->alias([
+            'admin' => \App\Http\Middleware\EnsureUserIsAdmin::class,
+        ]);
+        $middleware->redirectGuestsTo(fn () => route('admin.login'));
+    })
+
+That's it — no need to publish the Authenticate middleware manually.
